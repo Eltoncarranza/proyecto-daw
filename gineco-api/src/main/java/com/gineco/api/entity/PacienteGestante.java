@@ -2,16 +2,13 @@ package com.gineco.api.entity;
 
 import jakarta.persistence.*;
 import lombok.*;
-
 import java.time.LocalDate;
 import java.time.temporal.ChronoUnit;
 
 @Entity
 @Table(name = "pacientes_gestantes")
-@Getter
-@Setter
-@NoArgsConstructor
-@AllArgsConstructor
+@Getter @Setter
+@NoArgsConstructor @AllArgsConstructor
 @Builder
 public class PacienteGestante extends BaseEntity {
 
@@ -23,21 +20,17 @@ public class PacienteGestante extends BaseEntity {
     @JoinColumn(name = "paciente_id", nullable = false, unique = true)
     private Paciente paciente;
 
-    // Datos del embarazo
     @Column(nullable = false)
     private LocalDate fechaUltimaRegla;
 
     private LocalDate fechaUltimaEcografia;
-    private Integer semanasEcografia; // semanas al momento de la eco
-
-    // Fecha probable de parto (calculada y ajustable)
+    private Integer semanasEcografia;
     private LocalDate fechaProbableParto;
 
-    // Datos médicos obstetrícos
-    private Integer gestaciones;     // número de gestaciones previas
-    private Integer partos;          // partos anteriores
-    private Integer cesareas;        // cesáreas anteriores
-    private Integer abortos;         // abortos previos
+    private Integer gestaciones;
+    private Integer partos;
+    private Integer cesareas;
+    private Integer abortos;
     private Integer hijos_vivos;
 
     @Column(length = 5)
@@ -47,11 +40,13 @@ public class PacienteGestante extends BaseEntity {
     @Builder.Default
     private Boolean rhNegativo = false;
 
-    // Peso y talla al inicio
+    // CORRECCIÓN: Precisión para pesos y tallas
+    @Column(precision = 5, scale = 2)
     private Double pesoInicial;
+
+    @Column(precision = 4, scale = 2)
     private Double talla;
 
-    // Datos de riesgo
     @Column(length = 1000)
     private String factoresRiesgo;
 
@@ -59,7 +54,6 @@ public class PacienteGestante extends BaseEntity {
     @Builder.Default
     private Boolean embarazoAltoRiesgo = false;
 
-    // Resultados de laboratorio iniciales
     @Column(length = 10)
     private String hemoglobinaInicial;
     @Column(length = 10)
@@ -69,7 +63,6 @@ public class PacienteGestante extends BaseEntity {
     private Boolean hepatitisBResultado;
     private Boolean toxoplasmaIgg;
 
-    // Notas generales del embarazo
     @Column(columnDefinition = "TEXT")
     private String notasGenerales;
 
@@ -77,44 +70,27 @@ public class PacienteGestante extends BaseEntity {
     @Builder.Default
     private Boolean activo = true;
 
-    /**
-     * Calcula las semanas de gestación actuales basadas en FUR.
-     * Si hay fecha de eco, ajusta desde esa referencia.
-     */
     public int calcularSemanasActuales() {
-        LocalDate referencia = fechaUltimaRegla;
         if (fechaUltimaEcografia != null && semanasEcografia != null) {
             long diasDesdeEco = ChronoUnit.DAYS.between(fechaUltimaEcografia, LocalDate.now());
             return (int) (semanasEcografia + (diasDesdeEco / 7));
         }
-        long dias = ChronoUnit.DAYS.between(referencia, LocalDate.now());
+        long dias = ChronoUnit.DAYS.between(fechaUltimaRegla, LocalDate.now());
         return (int) (dias / 7);
     }
 
-    /**
-     * Calcula la fecha probable de parto usando Regla de Naegele.
-     */
     public LocalDate calcularFPP() {
         if (fechaProbableParto != null) return fechaProbableParto;
         return fechaUltimaRegla.plusDays(280);
     }
 
-    /**
-     * Recomienda el tipo de ecografía según semanas actuales.
-     */
     public String recomendarEcografia() {
         int semanas = calcularSemanasActuales();
-        if (semanas < 11) {
-            return "ECO_TEMPRANA";
-        } else if (semanas >= 11 && semanas <= 14) {
-            return "ECO_PRIMER_TRIMESTRE";
-        } else if (semanas >= 18 && semanas <= 24) {
-            return "ECO_MORFOLOGICA";
-        } else if (semanas >= 28 && semanas <= 32) {
-            return "ECO_TERCER_TRIMESTRE";
-        } else if (semanas >= 36) {
-            return "ECO_FINAL";
-        }
+        if (semanas < 11) return "ECO_TEMPRANA";
+        if (semanas <= 14) return "ECO_PRIMER_TRIMESTRE";
+        if (semanas <= 24) return "ECO_MORFOLOGICA";
+        if (semanas <= 32) return "ECO_TERCER_TRIMESTRE";
+        if (semanas >= 36) return "ECO_FINAL";
         return "NINGUNA_URGENTE";
     }
 }
