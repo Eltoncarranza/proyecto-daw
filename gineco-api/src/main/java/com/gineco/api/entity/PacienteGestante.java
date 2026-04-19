@@ -40,10 +40,11 @@ public class PacienteGestante extends BaseEntity {
     @Builder.Default
     private Boolean rhNegativo = false;
 
-    @Column(precision = 5, scale = 2)
+    // CORRECCIÓN: Los tipos Double ya no tienen precision ni scale
+    @Column
     private Double pesoInicial;
 
-    @Column(precision = 4, scale = 2)
+    @Column
     private Double talla;
 
     @Column(length = 1000)
@@ -69,8 +70,7 @@ public class PacienteGestante extends BaseEntity {
     @Builder.Default
     private Boolean activo = true;
 
-    // --- MÉTODOS DE CÁLCULO RENOMBRADOS PARA MAPSTRUCT ---
-
+    // Métodos para cálculos y MapStruct
     public Integer getSemanasActuales() {
         if (fechaUltimaEcografia != null && semanasEcografia != null) {
             long diasDesdeEco = ChronoUnit.DAYS.between(fechaUltimaEcografia, LocalDate.now());

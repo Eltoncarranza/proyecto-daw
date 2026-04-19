@@ -144,7 +144,6 @@ function doLogout() {
   GS.clearSession();
   window.location.href = 'login.html';
 }
-
 // ——— Cambiar contraseña ———
 async function cambiarPassword() {
   const actual    = document.getElementById('pass-actual').value;
@@ -157,7 +156,11 @@ async function cambiarPassword() {
 
   const res = await GS.api('/auth/cambiar-password', {
     method: 'POST',
-    body: JSON.stringify({ passwordActual: actual, passwordNueva: nueva })
+    // CORRECCIÓN: Los nombres de los campos deben coincidir con GinecoDTOs.CambiarPasswordRequest
+    body: JSON.stringify({
+      actualPassword: actual,
+      nuevoPassword: nueva
+    })
   });
 
   if (res?.ok) {

@@ -13,6 +13,10 @@ import java.util.List;
 @Builder
 public class Consulta extends BaseEntity {
 
+    public enum TipoConsulta {
+        PRIMERA_VEZ, CONTROL, EMERGENCIA, REEVALUACION
+    }
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
@@ -25,7 +29,7 @@ public class Consulta extends BaseEntity {
     @JoinColumn(name = "doctor_id", nullable = false)
     private Usuario doctor;
 
-    @Column(nullable = false, updatable = false)
+    @Column(nullable = false)
     private LocalDateTime fechaConsulta;
 
     @Enumerated(EnumType.STRING)
@@ -33,24 +37,58 @@ public class Consulta extends BaseEntity {
     private TipoConsulta tipoConsulta;
 
     @Column(columnDefinition = "TEXT")
+    private String motivoConsulta;
+
+    @Column(columnDefinition = "TEXT")
+    private String anamnesis;
+
+    @Column(columnDefinition = "TEXT")
+    private String examenFisico;
+
+    @Column(columnDefinition = "TEXT")
     private String diagnostico;
 
-    @Column(precision = 5, scale = 2)
+    @Column(columnDefinition = "TEXT")
+    private String tratamiento;
+
+    @Column(columnDefinition = "TEXT")
+    private String indicaciones;
+
+    @Column(length = 20)
+    private String presionArterial;
+
+    // CORRECCIÓN: Sin precision ni scale
+    @Column
     private Double temperatura;
 
-    @Column(precision = 5, scale = 2)
+    private Integer frecuenciaCardiaca;
+
+    @Column
     private Double peso;
 
-    @Column(precision = 4, scale = 2)
+    @Column
     private Double talla;
+
+    @Column(length = 50)
+    private String fcfBebe;
+
+    @Column(length = 50)
+    private String alturaUterina;
+
+    @Column(length = 20)
+    private String hemoglobinaActual;
+
+    @Column(columnDefinition = "TEXT")
+    private String resultadosLaboratorio;
+
+    @Column(columnDefinition = "TEXT")
+    private String notasAdicionales;
 
     @Column(nullable = false)
     @Builder.Default
     private Boolean finalizada = false;
 
-    @OneToMany(mappedBy = "consulta", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    @OneToMany(mappedBy = "consulta", cascade = CascadeType.ALL, orphanRemoval = true)
     @Builder.Default
     private List<ArchivoMedico> archivos = new ArrayList<>();
-
-    public enum TipoConsulta { GINECOLOGICA, OBSTETRICA, CONTROL, URGENCIA, SEGUIMIENTO }
 }
