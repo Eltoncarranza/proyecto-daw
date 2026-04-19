@@ -1,6 +1,6 @@
 package com.gineco.api.controller;
 
-import com.gineco.api.dto.GinecoDTOs.*;
+import com.gineco.api.dto.GinecoDTOs; // Importamos la clase principal
 import com.gineco.api.service.GestanteService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -20,24 +20,24 @@ public class GestanteController {
 
     @GetMapping
     @Operation(summary = "Obtener datos del embarazo de la paciente")
-    public ResponseEntity<GestanteResponse> obtener(@PathVariable Long pacienteId) {
+    public ResponseEntity<GinecoDTOs.GestanteResponse> obtener(@PathVariable Long pacienteId) {
         return ResponseEntity.ok(gestanteService.obtener(pacienteId));
     }
 
     @PostMapping
     @Operation(summary = "Registrar datos de embarazo (convierte a paciente gestante)")
-    public ResponseEntity<GestanteResponse> crear(
+    public ResponseEntity<GinecoDTOs.GestanteResponse> crear(
             @PathVariable Long pacienteId,
-            @Valid @RequestBody GestanteRequest request) {
+            @Valid @RequestBody GinecoDTOs.GestanteRequest request) {
         return ResponseEntity.status(HttpStatus.CREATED)
-            .body(gestanteService.crear(pacienteId, request));
+                .body(gestanteService.crear(pacienteId, request));
     }
 
     @PutMapping
     @Operation(summary = "Actualizar datos del embarazo")
-    public ResponseEntity<GestanteResponse> actualizar(
+    public ResponseEntity<GinecoDTOs.GestanteResponse> actualizar(
             @PathVariable Long pacienteId,
-            @Valid @RequestBody GestanteRequest request) {
+            @Valid @RequestBody GinecoDTOs.GestanteRequest request) {
         return ResponseEntity.ok(gestanteService.actualizar(pacienteId, request));
     }
 }

@@ -40,7 +40,6 @@ public class PacienteGestante extends BaseEntity {
     @Builder.Default
     private Boolean rhNegativo = false;
 
-    // CORRECCIÓN: Precisión para pesos y tallas
     @Column(precision = 5, scale = 2)
     private Double pesoInicial;
 
@@ -70,22 +69,26 @@ public class PacienteGestante extends BaseEntity {
     @Builder.Default
     private Boolean activo = true;
 
-    public int calcularSemanasActuales() {
+    // --- MÉTODOS DE CÁLCULO RENOMBRADOS PARA MAPSTRUCT ---
+
+    public Integer getSemanasActuales() {
         if (fechaUltimaEcografia != null && semanasEcografia != null) {
             long diasDesdeEco = ChronoUnit.DAYS.between(fechaUltimaEcografia, LocalDate.now());
             return (int) (semanasEcografia + (diasDesdeEco / 7));
         }
+        if (fechaUltimaRegla == null) return 0;
         long dias = ChronoUnit.DAYS.between(fechaUltimaRegla, LocalDate.now());
         return (int) (dias / 7);
     }
 
-    public LocalDate calcularFPP() {
+    public LocalDate getFechaProbablePartoCalculada() {
         if (fechaProbableParto != null) return fechaProbableParto;
+        if (fechaUltimaRegla == null) return null;
         return fechaUltimaRegla.plusDays(280);
     }
 
-    public String recomendarEcografia() {
-        int semanas = calcularSemanasActuales();
+    public String getRecomendacionEcografia() {
+        int semanas = getSemanasActuales();
         if (semanas < 11) return "ECO_TEMPRANA";
         if (semanas <= 14) return "ECO_PRIMER_TRIMESTRE";
         if (semanas <= 24) return "ECO_MORFOLOGICA";

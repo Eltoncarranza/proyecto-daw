@@ -16,7 +16,48 @@ import java.util.List;
 
 public class GinecoDTOs {
 
+    // ====================== AUTENTICACIÓN (NUEVO) ======================
+    // Agregamos esto para solucionar el error "Cannot resolve symbol AuthDTOs"
+
+    @Data
+    public static class LoginRequest {
+        @NotBlank(message = "El nombre de usuario es requerido")
+        private String username;
+
+        @NotBlank(message = "La contraseña es requerida")
+        private String password;
+    }
+
+    @Data
+    public static class LoginResponse {
+        private String token;
+        private String username;
+        private String nombre;
+        private String rol;
+    }
+
+    @Data
+    public static class CambiarPasswordRequest {
+        @NotBlank(message = "La contraseña actual es requerida")
+        private String actualPassword;
+
+        @NotBlank(message = "La nueva contraseña es requerida")
+        @Size(min = 6, message = "La nueva contraseña debe tener al menos 6 caracteres")
+        private String nuevoPassword;
+    }
+
+    @Data
+    public static class UsuarioDTO {
+        private Long id;
+        private String username;
+        private String nombre;
+        private String email;
+        private String rol;
+        private Boolean activo;
+    }
+
     // ====================== PACIENTE ======================
+    // ... (Tu código de PacienteRequest y PacienteResponse está bien)
 
     @Data
     public static class PacienteRequest {
@@ -61,6 +102,7 @@ public class GinecoDTOs {
     }
 
     // ====================== CONSULTA ======================
+    // ... (Tu código de ConsultaRequest y ConsultaResponse está bien)
 
     @Data
     public static class ConsultaRequest {
@@ -122,6 +164,7 @@ public class GinecoDTOs {
     }
 
     // ====================== CITA ======================
+    // ... (Tu código de CitaRequest y CitaResponse está bien)
 
     @Data
     public static class CitaRequest {
@@ -149,6 +192,7 @@ public class GinecoDTOs {
     }
 
     // ====================== GESTANTE ======================
+    // ... (Tu código de GestanteRequest y GestanteResponse está bien)
 
     @Data
     public static class GestanteRequest {

@@ -4,7 +4,7 @@ import com.gineco.api.dto.GinecoDTOs.*;
 import com.gineco.api.entity.Paciente;
 import com.gineco.api.exception.BusinessException;
 import com.gineco.api.exception.ResourceNotFoundException;
-import com.gineco.api.mapper.PacienteMapper;
+import com.gineco.api.dto.PacienteMapper;
 import com.gineco.api.repository.ConsultaRepository;
 import com.gineco.api.repository.PacienteRepository;
 import lombok.RequiredArgsConstructor;

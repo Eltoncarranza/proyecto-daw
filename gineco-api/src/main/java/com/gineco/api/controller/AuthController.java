@@ -1,6 +1,6 @@
 package com.gineco.api.controller;
 
-import com.gineco.api.dto.AuthDTOs;
+import com.gineco.api.dto.GinecoDTOs;
 import com.gineco.api.service.AuthService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -23,8 +23,8 @@ public class AuthController {
 
     @PostMapping("/login")
     @Operation(summary = "Iniciar sesión")
-    public ResponseEntity<AuthDTOs.LoginResponse> login(
-            @Valid @RequestBody AuthDTOs.LoginRequest request) {
+    public ResponseEntity<GinecoDTOs.LoginResponse> login(
+            @Valid @RequestBody GinecoDTOs.LoginRequest request) {
         return ResponseEntity.ok(authService.login(request));
     }
 
@@ -32,7 +32,7 @@ public class AuthController {
     @Operation(summary = "Cambiar contraseña del usuario autenticado")
     public ResponseEntity<Map<String, String>> cambiarPassword(
             @AuthenticationPrincipal UserDetails userDetails,
-            @Valid @RequestBody AuthDTOs.CambiarPasswordRequest request) {
+            @Valid @RequestBody GinecoDTOs.CambiarPasswordRequest request) {
         authService.cambiarPassword(userDetails.getUsername(), request);
         return ResponseEntity.ok(Map.of("mensaje", "Contraseña actualizada correctamente"));
     }

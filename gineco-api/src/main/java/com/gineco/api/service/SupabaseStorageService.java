@@ -26,6 +26,7 @@ public class SupabaseStorageService {
 
     private final RestTemplate restTemplate = new RestTemplate();
 
+    // Método genérico para subir archivos organizados por carpeta
     public String upload(MultipartFile file, String carpeta) {
         validateFile(file);
         String extension = getExtension(file.getOriginalFilename());
@@ -35,16 +36,42 @@ public class SupabaseStorageService {
         HttpHeaders headers = new HttpHeaders();
         headers.set("Authorization", "Bearer " + serviceKey);
         headers.setContentType(MediaType.parseMediaType(
-            file.getContentType() != null ? file.getContentType() : "application/octet-stream"));
+                file.getContentType() != null ? file.getContentType() : "application/octet-stream"));
 
         try {
             HttpEntity<byte[]> entity = new HttpEntity<>(file.getBytes(), headers);
             restTemplate.exchange(url, HttpMethod.POST, entity, String.class);
-            return key;
+            return key; // Retorna la llave (ruta interna)
         } catch (IOException e) {
-            throw new BusinessException("Error al subir archivo: " + e.getMessage());
+            throw new BusinessException("Error al leer el archivo: " + e.getMessage());
+        } catch (Exception e) {
+            throw new BusinessException("Error de conexión con Supabase: " + e.getMessage());
         }
     }
+
+    // --- MÉTODOS QUE FALTABAN PARA SOLUCIONAR EL ERROR ---
+
+    /**
+     * Sube un archivo a la carpeta predeterminada 'consultas'
+     * y retorna la URL pública completa.
+     */
+    public String uploadFile(MultipartFile file) {
+        String key = upload(file, "consultas");
+        return getPublicUrl(key);
+    }
+
+    /**
+     * Extrae la 'key' de la URL pública y elimina el objeto de Supabase.
+     */
+    public void deleteFile(String urlArchivo) {
+        if (urlArchivo == null || !urlArchivo.contains(bucket + "/")) return;
+
+        // Extrae todo lo que está después del nombre del bucket en la URL
+        String key = urlArchivo.substring(urlArchivo.indexOf(bucket + "/") + bucket.length() + 1);
+        delete(key);
+    }
+
+    // --- MÉTODOS DE APOYO ---
 
     public String getPublicUrl(String key) {
         return supabaseUrl + "/storage/v1/object/public/" + bucket + "/" + key;
@@ -57,18 +84,20 @@ public class SupabaseStorageService {
         try {
             restTemplate.exchange(url, HttpMethod.DELETE, new HttpEntity<>(headers), String.class);
         } catch (Exception e) {
-            // Log pero no lanzar - el registro ya fue eliminado de la BD
+            // Log pero no lanzar error si el archivo ya no existe físicamente
         }
     }
 
     private void validateFile(MultipartFile file) {
         if (file.isEmpty()) throw new BusinessException("El archivo está vacío");
-        long maxBytes = 20L * 1024 * 1024;
+        long maxBytes = 20L * 1024 * 1024; // 20MB
         if (file.getSize() > maxBytes) throw new BusinessException("El archivo supera el límite de 20MB");
+
         String ct = file.getContentType();
         if (ct == null) throw new BusinessException("Tipo de archivo no reconocido");
+
         if (!ct.startsWith("image/") && !ct.equals("application/pdf")) {
-            throw new BusinessException("Solo se permiten imágenes y PDFs");
+            throw new BusinessException("Solo se permiten imágenes (JPG, PNG) y archivos PDF");
         }
     }
 

@@ -17,23 +17,20 @@ public class GestanteService {
 
     private final PacienteGestanteRepository gestanteRepo;
     private final PacienteRepository pacienteRepo;
-    private final GestanteMapper gestanteMapper; // Inyectado
+    private final GestanteMapper gestanteMapper;
 
     private static final Map<String, String> DESCRIPCION_ECOGRAFIAS = Map.of(
             "ECO_TEMPRANA", "Ecografía de datación (< 11 semanas)",
             "ECO_PRIMER_TRIMESTRE", "Ecografía de tamizaje genético (11-14 sem)",
             "ECO_MORFOLOGICA", "Ecografía morfológica estructural (18-24 sem)",
             "ECO_TERCER_TRIMESTRE", "Ecografía de tercer trimestre (28-32 sem)",
-            "ECO_FINAL", "Ecografía de término (≥36 sem)",
-            "NINGUNA_URGENTE", "Sin ecografía urgente en este período"
+            "ECO_FINAL", "Ecografía de término (≥36 sem)"
     );
 
     public GestanteResponse obtener(Long pacienteId) {
         PacienteGestante g = gestanteRepo.findByPacienteId(pacienteId)
                 .orElseThrow(() -> new ResourceNotFoundException("Datos de embarazo no encontrados"));
-        GestanteResponse response = gestanteMapper.toResponse(g);
-        response.setDescripcionEcografia(DESCRIPCION_ECOGRAFIAS.getOrDefault(response.getRecomendacionEcografia(), ""));
-        return response;
+        return toGestanteResponse(g);
     }
 
     @Transactional
@@ -53,9 +50,18 @@ public class GestanteService {
         return toGestanteResponse(gestanteRepo.save(g));
     }
 
+    @Transactional
+    public GestanteResponse actualizar(Long pacienteId, GestanteRequest request) {
+        PacienteGestante g = gestanteRepo.findByPacienteId(pacienteId)
+                .orElseThrow(() -> new ResourceNotFoundException("No se encontraron datos de gestante"));
+
+        gestanteMapper.updateEntityFromRequest(request, g);
+        return toGestanteResponse(gestanteRepo.save(g));
+    }
+
     private GestanteResponse toGestanteResponse(PacienteGestante g) {
         GestanteResponse res = gestanteMapper.toResponse(g);
-        res.setDescripcionEcografia(DESCRIPCION_ECOGRAFIAS.getOrDefault(res.getRecomendacionEcografia(), ""));
+        res.setDescripcionEcografia(DESCRIPCION_ECOGRAFIAS.getOrDefault(res.getRecomendacionEcografia(), "Sin recomendación específica"));
         return res;
     }
 }

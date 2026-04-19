@@ -1,6 +1,6 @@
 package com.gineco.api.service;
 
-import com.gineco.api.dto.AuthDTOs;
+import com.gineco.api.dto.GinecoDTOs; // Cambio: Usar GinecoDTOs
 import com.gineco.api.entity.Usuario;
 import com.gineco.api.exception.BusinessException;
 import com.gineco.api.exception.ResourceNotFoundException;
@@ -24,48 +24,53 @@ public class AuthService {
     private final UsuarioRepository usuarioRepo;
     private final PasswordEncoder passwordEncoder;
 
-    public AuthDTOs.LoginResponse login(AuthDTOs.LoginRequest request) {
+    public GinecoDTOs.LoginResponse login(GinecoDTOs.LoginRequest request) {
+        // 1. Autenticar con Spring Security
         authManager.authenticate(
-            new UsernamePasswordAuthenticationToken(request.getUsername(), request.getPassword())
+                new UsernamePasswordAuthenticationToken(request.getUsername(), request.getPassword())
         );
 
+        // 2. Cargar detalles y generar Token
         UserDetails userDetails = userDetailsService.loadUserByUsername(request.getUsername());
         String token = jwtUtil.generateToken(userDetails);
-        String refreshToken = jwtUtil.generateRefreshToken(userDetails);
 
-        Usuario usuario = usuarioRepo.findByUsername(request.getUsername()).orElseThrow();
+        // 3. Obtener datos adicionales del usuario para la respuesta
+        Usuario usuario = usuarioRepo.findByUsername(request.getUsername())
+                .orElseThrow(() -> new ResourceNotFoundException("Usuario no encontrado"));
 
-        return new AuthDTOs.LoginResponse(
-            token, refreshToken,
-            usuario.getUsername(),
-            usuario.getNombreCompleto(),
-            usuario.getRol().name()
-        );
+        // 4. Construir respuesta (Ajustado a los campos de GinecoDTOs.LoginResponse)
+        GinecoDTOs.LoginResponse response = new GinecoDTOs.LoginResponse();
+        response.setToken(token);
+        response.setUsername(usuario.getUsername());
+        response.setNombre(usuario.getNombreCompleto());
+        response.setRol(usuario.getRol().name());
+
+        return response;
     }
 
     @Transactional
-    public void cambiarPassword(String username, AuthDTOs.CambiarPasswordRequest request) {
+    public void cambiarPassword(String username, GinecoDTOs.CambiarPasswordRequest request) {
         Usuario usuario = usuarioRepo.findByUsername(username)
-            .orElseThrow(() -> new ResourceNotFoundException("Usuario no encontrado"));
+                .orElseThrow(() -> new ResourceNotFoundException("Usuario no encontrado"));
 
-        if (!passwordEncoder.matches(request.getPasswordActual(), usuario.getPassword())) {
+        // Nota: Verifica que los nombres de campos coincidan con GinecoDTOs (actualPassword vs passwordActual)
+        if (!passwordEncoder.matches(request.getActualPassword(), usuario.getPassword())) {
             throw new BusinessException("La contraseña actual es incorrecta");
         }
 
-        usuario.setPassword(passwordEncoder.encode(request.getPasswordNueva()));
+        usuario.setPassword(passwordEncoder.encode(request.getNuevoPassword()));
         usuarioRepo.save(usuario);
     }
 
     @Transactional
     public void crearUsuarioInicial() {
-        // Crea el doctor principal si no existe
         if (!usuarioRepo.existsByUsername("doctor")) {
-            Usuario admin = Usuario.builder()
-                .username("doctor")
-                .password(passwordEncoder.encode("gineco2025"))
-                .nombreCompleto("Dr. Ginecólogo")
-                .rol(Usuario.Rol.DOCTOR)
-                .build();
+            Usuario admin = new Usuario(); // Usamos constructor si builder da problemas
+            admin.setUsername("doctor");
+            admin.setPassword(passwordEncoder.encode("gineco2025"));
+            admin.setNombreCompleto("Dr. Ginecólogo");
+            admin.setRol(Usuario.Rol.DOCTOR);
+            admin.setActivo(true);
             usuarioRepo.save(admin);
         }
     }

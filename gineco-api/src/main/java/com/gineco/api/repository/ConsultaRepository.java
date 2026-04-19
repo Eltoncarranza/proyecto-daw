@@ -14,18 +14,23 @@ import java.util.List;
 @Repository
 public interface ConsultaRepository extends JpaRepository<Consulta, Long> {
 
+    // Para el historial paginado
     Page<Consulta> findByPacienteIdOrderByFechaConsultaDesc(Long pacienteId, Pageable pageable);
 
+    // Para el historial completo
     List<Consulta> findByPacienteIdOrderByFechaConsultaDesc(Long pacienteId);
 
-    // Consultas del día para el doctor
+    // Este es el método que usa tu ConsultaService para las consultas del día
+    List<Consulta> findByDoctorIdAndFechaConsultaBetween(Long doctorId, LocalDateTime inicio, LocalDateTime fin);
+
+    // Consultas del día con Query personalizada (opcional, pero útil para ordenar)
     @Query("SELECT c FROM Consulta c WHERE c.doctor.id = :doctorId " +
-           "AND c.fechaConsulta >= :inicio AND c.fechaConsulta < :fin " +
-           "ORDER BY c.fechaConsulta ASC")
+            "AND c.fechaConsulta >= :inicio AND c.fechaConsulta <= :fin " +
+            "ORDER BY c.fechaConsulta ASC")
     List<Consulta> findConsultasDelDia(
-        @Param("doctorId") Long doctorId,
-        @Param("inicio") LocalDateTime inicio,
-        @Param("fin") LocalDateTime fin
+            @Param("doctorId") Long doctorId,
+            @Param("inicio") LocalDateTime inicio,
+            @Param("fin") LocalDateTime fin
     );
 
     long countByPacienteId(Long pacienteId);
