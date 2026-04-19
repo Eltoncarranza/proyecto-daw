@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>GinecoSys — Iniciar Sesión</title>
+<link rel="stylesheet" href="css/login.css">
+</head>
+<body>
+
+<!-- Panel izquierdo decorativo -->
+<div class="login-art">
+  <div class="art-circles">
+    <div class="art-circle"></div>
+    <div class="art-circle"></div>
+    <div class="art-circle"></div>
+    <div class="art-circle"></div>
+    <div class="art-dot"></div>
+    <div class="art-dot"></div>
+    <div class="art-dot"></div>
+  </div>
+  <div class="art-content">
+    <h2>Cuidado<br>médico con<br><em>precisión</em></h2>
+    <p>Sistema integral de gestión para consultas ginecológicas y seguimiento obstétrico. Historia clínica, agenda y más.</p>
+    <div class="art-footer">
+      <div class="art-footer-dot"></div>
+      <span>GinecoSys v2.0</span>
+    </div>
+  </div>
+</div>
+
+<!-- Panel derecho con formulario -->
+<div class="login-form-panel">
+  <div class="login-box">
+
+    <div class="login-logo">
+      <div class="login-logo-mark">🌸</div>
+      <div class="login-logo-text">
+        <h1>GinecoSys</h1>
+        <span>Sistema Médico</span>
+      </div>
+    </div>
+
+    <h2 class="login-heading">Bienvenido</h2>
+    <p class="login-subheading">Ingrese sus credenciales para continuar</p>
+
+    <div class="form-field">
+      <label for="username">Usuario</label>
+      <input type="text" id="username" placeholder="Ej: doctor" autocomplete="username" autofocus>
+    </div>
+
+    <div class="form-field">
+      <label for="password">Contraseña</label>
+      <input type="password" id="password" placeholder="Su contraseña" autocomplete="current-password">
+    </div>
+
+    <button class="login-btn" id="login-btn" onclick="doLogin()">
+      <span id="btn-text">Ingresar al sistema</span>
+    </button>
+
+    <div class="login-error" id="login-error">
+      <span>⚠</span> <span id="error-msg">Usuario o contraseña incorrectos</span>
+    </div>
+
+    <p class="login-hint">
+      Credenciales por defecto: <strong>doctor</strong> / <strong>gineco2025</strong>
+    </p>
+
+  </div>
+</div>
+
+<script src="js/core.js"></script>
+<script>
+  // Redirigir si ya hay sesión
+  if (GS.isLoggedIn()) window.location.href = 'index.html';
+
+  async function doLogin() {
+    const username = document.getElementById('username').value.trim();
+    const password = document.getElementById('password').value;
+    const btn      = document.getElementById('login-btn');
+    const errEl    = document.getElementById('login-error');
+
+    if (!username || !password) {
+      showError('Complete todos los campos'); return;
+    }
+
+    btn.disabled = true;
+    document.getElementById('btn-text').textContent = 'Verificando…';
+
+    try {
+      const res = await fetch('http://localhost:8080/api/auth/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ username, password })
+      });
+
+      if (!res.ok) { showError('Usuario o contraseña incorrectos'); return; }
+
+      const data = await res.json();
+      GS.setSession(data.token, {
+        username:      data.username,
+        nombreCompleto: data.nombreCompleto,
+        rol:           data.rol
+      });
+      window.location.href = 'index.html';
+
+    } catch (e) {
+      showError('No se pudo conectar con el servidor. Verifique que la API esté ejecutándose.');
+    } finally {
+      btn.disabled = false;
+      document.getElementById('btn-text').textContent = 'Ingresar al sistema';
+    }
+  }
+
+  function showError(msg) {
+    const el = document.getElementById('login-error');
+    document.getElementById('error-msg').textContent = msg;
+    el.classList.add('show');
+    setTimeout(() => el.classList.remove('show'), 5000);
+  }
+
+  document.getElementById('password').addEventListener('keydown', e => {
+    if (e.key === 'Enter') doLogin();
+  });
+</script>
+</body>
+</html>

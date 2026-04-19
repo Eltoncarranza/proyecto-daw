@@ -1,0 +1,690 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>GinecoSys</title>
+<link rel="stylesheet" href="css/main.css">
+</head>
+<body>
+
+<div class="app-shell" id="app">
+
+  <!-- ===== SIDEBAR ===== -->
+  <aside class="sidebar">
+    <div class="sidebar-logo">
+      <h1>GinecoSys 🌸</h1>
+      <span>Sistema Médico</span>
+    </div>
+
+    <nav class="sidebar-nav">
+      <div class="nav-item active" data-view="dashboard" onclick="showView('dashboard')">
+        <div class="nav-icon">📊</div>
+        Inicio
+      </div>
+      <div class="nav-item" data-view="pacientes" onclick="showView('pacientes')">
+        <div class="nav-icon">👥</div>
+        Pacientes
+      </div>
+      <div class="nav-item" data-view="consultas" onclick="showView('consultas')">
+        <div class="nav-icon">📋</div>
+        Consultas de hoy
+      </div>
+      <div class="nav-item" data-view="agenda" onclick="showView('agenda')">
+        <div class="nav-icon">📅</div>
+        Agenda
+      </div>
+
+      <div class="nav-divider"></div>
+
+      <div class="nav-item" data-view="password" onclick="openModal('modal-password')">
+        <div class="nav-icon">🔑</div>
+        Cambiar contraseña
+      </div>
+      <div class="nav-item" onclick="doLogout()">
+        <div class="nav-icon">🚪</div>
+        Cerrar sesión
+      </div>
+    </nav>
+
+    <div class="sidebar-footer">
+      <div class="sidebar-user">
+        <div class="user-avatar-small" id="user-avatar-initials">DR</div>
+        <div>
+          <div class="user-name-small" id="user-name-display">Doctor</div>
+          <div class="user-role-small" id="user-role-display">Médico</div>
+        </div>
+      </div>
+    </div>
+  </aside>
+
+  <!-- ===== MAIN AREA ===== -->
+  <main class="main-area">
+
+    <!-- Topbar -->
+    <header class="topbar">
+      <div class="topbar-left">
+        <h2 class="page-title" id="page-title">Inicio</h2>
+      </div>
+      <div class="topbar-right">
+        <span class="topbar-date" id="topbar-date"></span>
+      </div>
+    </header>
+
+    <!-- Page content -->
+    <div class="page-content" id="page-content">
+
+      <!-- ===== DASHBOARD ===== -->
+      <div class="view active" id="view-dashboard">
+        <div class="stats-grid" id="stats-grid">
+          <div class="stat-card">
+            <div class="stat-icon" style="background:var(--mauve-light)">👥</div>
+            <div class="stat-num" id="stat-total">—</div>
+            <div class="stat-label">Pacientes registradas</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-icon" style="background:var(--blue-light)">🤰</div>
+            <div class="stat-num" id="stat-gestantes">—</div>
+            <div class="stat-label">Gestantes activas</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-icon" style="background:var(--sage-light)">📋</div>
+            <div class="stat-num" id="stat-consultas-hoy">—</div>
+            <div class="stat-label">Consultas hoy</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-icon" style="background:var(--amber-light)">📅</div>
+            <div class="stat-num" id="stat-citas-hoy">—</div>
+            <div class="stat-label">Citas hoy</div>
+          </div>
+        </div>
+
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px">
+          <!-- Consultas hoy -->
+          <div class="card">
+            <div class="card-header">
+              <span class="card-title">Consultas de hoy</span>
+              <button class="btn btn-sm btn-primary" onclick="showView('consultas')">Ver todo</button>
+            </div>
+            <div id="dash-consultas"></div>
+          </div>
+          <!-- Agenda hoy -->
+          <div class="card">
+            <div class="card-header">
+              <span class="card-title">Próximas citas</span>
+              <button class="btn btn-sm btn-sage" onclick="showView('agenda')">Ver agenda</button>
+            </div>
+            <div id="dash-citas"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ===== PACIENTES ===== -->
+      <div class="view" id="view-pacientes">
+        <div class="section-header">
+          <div>
+            <h1 class="section-title">Pacientes</h1>
+            <p class="section-subtitle">Busque por DNI o nombre completo</p>
+          </div>
+          <button class="btn btn-primary" onclick="openModal('modal-nueva-paciente')">
+            + Nueva paciente
+          </button>
+        </div>
+
+        <div style="display:flex;gap:12px;margin-bottom:18px;align-items:center">
+          <div class="search-wrap">
+            <span class="search-icon">🔍</span>
+            <input type="text" class="search-input" id="input-busqueda"
+              placeholder="Buscar por DNI, nombre o apellido..."
+              oninput="debounceSearch()">
+          </div>
+          <select class="form-control" style="width:180px" onchange="filtrarTipo(this.value)">
+            <option value="">Todas las pacientes</option>
+            <option value="GINECOLOGICA">Ginecológicas</option>
+            <option value="GESTANTE">Gestantes</option>
+          </select>
+        </div>
+
+        <div id="lista-pacientes" class="patient-list"></div>
+        <div class="pagination" id="paginacion"></div>
+      </div>
+
+      <!-- ===== DETALLE PACIENTE ===== -->
+      <div class="view" id="view-detalle">
+        <div style="margin-bottom:16px">
+          <button class="btn btn-ghost btn-sm" onclick="showView('pacientes')">
+            ← Volver a pacientes
+          </button>
+        </div>
+        <div id="detalle-contenido"></div>
+      </div>
+
+      <!-- ===== CONSULTAS HOY ===== -->
+      <div class="view" id="view-consultas">
+        <div class="section-header">
+          <div>
+            <h1 class="section-title">Consultas de hoy</h1>
+            <p class="section-subtitle" id="consultas-fecha-label"></p>
+          </div>
+          <button class="btn btn-sage" onclick="abrirNuevaConsulta()">
+            + Nueva consulta
+          </button>
+        </div>
+        <div id="consultas-hoy-lista"></div>
+      </div>
+
+      <!-- ===== AGENDA ===== -->
+      <div class="view" id="view-agenda">
+        <div class="section-header">
+          <div>
+            <h1 class="section-title">Agenda</h1>
+            <p class="section-subtitle">Gestión de citas y horarios</p>
+          </div>
+          <div style="display:flex;gap:10px;align-items:center">
+            <div class="date-nav">
+              <button class="date-nav-btn" onclick="cambiarDiaAgenda(-1)">◀</button>
+              <span class="date-nav-label" id="agenda-fecha-label"></span>
+              <button class="date-nav-btn" onclick="cambiarDiaAgenda(1)">▶</button>
+            </div>
+            <input type="date" class="form-control" id="agenda-date-picker"
+              style="width:160px" onchange="agendaFechaManual()">
+            <button class="btn btn-blue" onclick="openModal('modal-nueva-cita')">
+              + Nueva cita
+            </button>
+          </div>
+        </div>
+        <div id="agenda-lista"></div>
+      </div>
+
+    </div><!-- /page-content -->
+  </main>
+</div>
+
+<!-- ===== MODALES ===== -->
+
+<!-- Modal: Nueva / Editar Paciente -->
+<div class="modal-backdrop" id="modal-nueva-paciente">
+  <div class="modal modal-xl">
+    <div class="modal-header">
+      <div>
+        <h2 id="modal-paciente-titulo">Registrar nueva paciente</h2>
+        <p>Complete los datos de identificación y antecedentes</p>
+      </div>
+      <button class="modal-close" onclick="closeModal('modal-nueva-paciente')">✕</button>
+    </div>
+    <div class="modal-body">
+      <input type="hidden" id="edit-paciente-id">
+
+      <div class="form-section">
+        <p class="form-section-title">Identificación</p>
+        <div class="form-row cols-2">
+          <div class="form-group">
+            <label class="form-label">DNI *</label>
+            <input type="text" id="nv-dni" class="form-control" placeholder="12345678" maxlength="20">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Tipo de paciente</label>
+            <select id="nv-tipo" class="form-control">
+              <option value="GINECOLOGICA">Ginecológica</option>
+              <option value="GESTANTE">Gestante / Obstétrica</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Nombres *</label>
+            <input type="text" id="nv-nombres" class="form-control" placeholder="María Elena">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Apellidos *</label>
+            <input type="text" id="nv-apellidos" class="form-control" placeholder="García López">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Fecha de nacimiento *</label>
+            <input type="date" id="nv-fechanac" class="form-control">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Grupo sanguíneo</label>
+            <select id="nv-grupo" class="form-control">
+              <option value="">— Seleccionar —</option>
+              <option>O+</option><option>O-</option>
+              <option>A+</option><option>A-</option>
+              <option>B+</option><option>B-</option>
+              <option>AB+</option><option>AB-</option>
+            </select>
+          </div>
+        </div>
+      </div>
+
+      <div class="form-section">
+        <p class="form-section-title">Contacto</p>
+        <div class="form-row cols-3">
+          <div class="form-group">
+            <label class="form-label">Teléfono</label>
+            <input type="text" id="nv-tel" class="form-control" placeholder="987 654 321">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Email</label>
+            <input type="email" id="nv-email" class="form-control" placeholder="correo@email.com">
+          </div>
+          <div class="form-group form-full">
+            <label class="form-label">Dirección</label>
+            <input type="text" id="nv-dir" class="form-control" placeholder="Av. Los Jardines 123, Lima">
+          </div>
+        </div>
+      </div>
+
+      <div class="form-section">
+        <p class="form-section-title">Antecedentes médicos</p>
+        <div class="form-row cols-2">
+          <div class="form-group">
+            <label class="form-label">Alergias conocidas</label>
+            <textarea id="nv-alerg" class="form-control" placeholder="Penicilina, látex, contraste..."></textarea>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Antecedentes personales</label>
+            <textarea id="nv-antec-pers" class="form-control" placeholder="Enfermedades previas, cirugías..."></textarea>
+          </div>
+          <div class="form-group form-full">
+            <label class="form-label">Antecedentes familiares</label>
+            <textarea id="nv-antec-fam" class="form-control" placeholder="Diabetes, hipertensión, cáncer en familia..."></textarea>
+          </div>
+        </div>
+      </div>
+
+      <div class="form-section">
+        <p class="form-section-title">Contacto de emergencia</p>
+        <div class="form-row cols-3">
+          <div class="form-group">
+            <label class="form-label">Nombre completo</label>
+            <input type="text" id="nv-emer-nombre" class="form-control" placeholder="Juan García">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Teléfono</label>
+            <input type="text" id="nv-emer-tel" class="form-control" placeholder="987 654 321">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Relación</label>
+            <input type="text" id="nv-emer-rel" class="form-control" placeholder="Esposo, madre, hijo...">
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="closeModal('modal-nueva-paciente')">Cancelar</button>
+      <button class="btn btn-primary" onclick="guardarPaciente()">Guardar paciente</button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal: Datos del embarazo -->
+<div class="modal-backdrop" id="modal-gestante">
+  <div class="modal modal-xl">
+    <div class="modal-header">
+      <div>
+        <h2>🤰 Datos del embarazo</h2>
+        <p id="modal-gestante-subtitle">Complete la información obstétrica</p>
+      </div>
+      <button class="modal-close" onclick="closeModal('modal-gestante')">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-section">
+        <p class="form-section-title">Fechas del embarazo</p>
+        <div class="form-row cols-2">
+          <div class="form-group">
+            <label class="form-label">Fecha última regla (FUR) *</label>
+            <input type="date" id="gest-fur" class="form-control" oninput="calcFPP()">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Fecha probable de parto (FPP)</label>
+            <input type="date" id="gest-fpp" class="form-control">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Fecha última ecografía</label>
+            <input type="date" id="gest-fecha-eco" class="form-control">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Semanas en esa ecografía</label>
+            <input type="number" id="gest-sem-eco" class="form-control" placeholder="Ej: 12" min="1" max="42">
+          </div>
+        </div>
+        <div id="semanas-preview" style="display:none;padding:10px 14px;background:var(--blue-light);border-radius:var(--r-md);font-size:13.5px;color:var(--blue);margin-top:10px"></div>
+      </div>
+
+      <div class="form-section">
+        <p class="form-section-title">Historia obstétrica anterior (G · P · C · A)</p>
+        <div class="form-row cols-4">
+          <div class="form-group">
+            <label class="form-label">Gestaciones</label>
+            <input type="number" id="gest-g" class="form-control" min="0" value="0">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Partos</label>
+            <input type="number" id="gest-p" class="form-control" min="0" value="0">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Cesáreas</label>
+            <input type="number" id="gest-c" class="form-control" min="0" value="0">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Abortos</label>
+            <input type="number" id="gest-a" class="form-control" min="0" value="0">
+          </div>
+        </div>
+      </div>
+
+      <div class="form-section">
+        <p class="form-section-title">Datos biométricos y factor de riesgo</p>
+        <div class="form-row cols-3">
+          <div class="form-group">
+            <label class="form-label">Grupo sanguíneo</label>
+            <select id="gest-grupo" class="form-control">
+              <option value="">— —</option>
+              <option>O+</option><option>O-</option>
+              <option>A+</option><option>A-</option>
+              <option>B+</option><option>B-</option>
+              <option>AB+</option><option>AB-</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Factor Rh</label>
+            <select id="gest-rh" class="form-control">
+              <option value="false">Positivo (+)</option>
+              <option value="true">Negativo (−)</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label class="form-label">¿Alto riesgo?</label>
+            <select id="gest-alto-riesgo" class="form-control">
+              <option value="false">No</option>
+              <option value="true">Sí — alto riesgo</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Peso inicial (kg)</label>
+            <input type="number" id="gest-peso" class="form-control" step="0.1" placeholder="60.5">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Talla (cm)</label>
+            <input type="number" id="gest-talla" class="form-control" placeholder="162">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Factores de riesgo</label>
+            <input type="text" id="gest-riesgo" class="form-control" placeholder="HTA, diabetes gestacional...">
+          </div>
+        </div>
+      </div>
+
+      <div class="form-section">
+        <p class="form-section-title">Laboratorio inicial</p>
+        <div class="form-row cols-3">
+          <div class="form-group">
+            <label class="form-label">Hemoglobina</label>
+            <input type="text" id="gest-hb" class="form-control" placeholder="11.5 g/dL">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Hematocrito</label>
+            <input type="text" id="gest-hcto" class="form-control" placeholder="35%">
+          </div>
+          <div class="form-group">
+            <label class="form-label">VIH</label>
+            <select id="gest-vih" class="form-control">
+              <option value="">— —</option>
+              <option value="false">No reactivo</option>
+              <option value="true">Reactivo</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Sífilis (VDRL)</label>
+            <select id="gest-sifilis" class="form-control">
+              <option value="">— —</option>
+              <option value="false">No reactivo</option>
+              <option value="true">Reactivo</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Hepatitis B</label>
+            <select id="gest-hb-virus" class="form-control">
+              <option value="">— —</option>
+              <option value="false">Negativo</option>
+              <option value="true">Positivo</option>
+            </select>
+          </div>
+        </div>
+      </div>
+
+      <div class="form-section">
+        <p class="form-section-title">Notas generales del embarazo</p>
+        <textarea id="gest-notas" class="form-control" style="min-height:80px" placeholder="Observaciones, indicaciones generales..."></textarea>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="closeModal('modal-gestante')">Cancelar</button>
+      <button class="btn btn-blue" onclick="guardarGestante()">Guardar datos del embarazo</button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal: Nueva / Editar Consulta -->
+<div class="modal-backdrop" id="modal-consulta">
+  <div class="modal modal-xl">
+    <div class="modal-header">
+      <div>
+        <h2 id="modal-consulta-titulo">Nueva consulta</h2>
+        <p id="modal-consulta-paciente-label" style="color:var(--sage)"></p>
+      </div>
+      <button class="modal-close" onclick="closeModal('modal-consulta')">✕</button>
+    </div>
+    <div class="modal-body">
+      <input type="hidden" id="nc-consulta-id">
+      <input type="hidden" id="nc-paciente-id">
+
+      <!-- Selector de paciente (solo en nueva consulta) -->
+      <div id="nc-selector-paciente" class="form-section">
+        <p class="form-section-title">Paciente</p>
+        <div style="position:relative">
+          <input type="text" id="nc-busq-pac" class="form-control" placeholder="Buscar paciente por nombre o DNI…">
+          <div class="autocomplete-drop" id="nc-drop-pac"></div>
+        </div>
+        <span id="nc-pac-sel" style="font-size:13px;color:var(--sage);margin-top:6px;display:none"></span>
+      </div>
+
+      <div class="form-section">
+        <p class="form-section-title">Datos de la consulta</p>
+        <div class="form-row cols-2">
+          <div class="form-group">
+            <label class="form-label">Tipo de consulta</label>
+            <select id="nc-tipo" class="form-control">
+              <option value="GINECOLOGICA">Ginecológica</option>
+              <option value="OBSTETRICA">Obstétrica</option>
+              <option value="CONTROL">Control</option>
+              <option value="SEGUIMIENTO">Seguimiento</option>
+              <option value="URGENCIA">Urgencia</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Motivo de consulta</label>
+            <input type="text" id="nc-motivo" class="form-control" placeholder="Dolor, control de rutina...">
+          </div>
+        </div>
+      </div>
+
+      <!-- Signos vitales -->
+      <div class="form-section">
+        <p class="form-section-title">Signos vitales</p>
+        <div class="form-row cols-4">
+          <div class="form-group">
+            <label class="form-label">Presión arterial</label>
+            <input type="text" id="nc-pa" class="form-control" placeholder="120/80">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Temperatura °C</label>
+            <input type="number" id="nc-temp" class="form-control" step="0.1" placeholder="36.5">
+          </div>
+          <div class="form-group">
+            <label class="form-label">F.C. (lpm)</label>
+            <input type="number" id="nc-fc" class="form-control" placeholder="72">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Peso (kg)</label>
+            <input type="number" id="nc-peso" class="form-control" step="0.1" placeholder="65.5">
+          </div>
+        </div>
+      </div>
+
+      <!-- Campos extra obstétricos (se muestran si es gestante) -->
+      <div id="nc-obst-fields" style="display:none">
+        <div class="form-section" style="border-color:rgba(74,111,165,0.3);background:var(--blue-light)">
+          <p class="form-section-title" style="color:var(--blue)">Datos obstétricos</p>
+          <div class="form-row cols-3">
+            <div class="form-group">
+              <label class="form-label">FCF bebé (lpm)</label>
+              <input type="text" id="nc-fcf" class="form-control" placeholder="140 lpm">
+            </div>
+            <div class="form-group">
+              <label class="form-label">Altura uterina (cm)</label>
+              <input type="text" id="nc-au" class="form-control" placeholder="28 cm">
+            </div>
+            <div class="form-group">
+              <label class="form-label">Hemoglobina actual</label>
+              <input type="text" id="nc-hb-act" class="form-control" placeholder="11.5 g/dL">
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Historia clínica -->
+      <div class="form-section">
+        <p class="form-section-title">Historia clínica</p>
+        <div class="form-row cols-2">
+          <div class="form-group">
+            <label class="form-label">Anamnesis</label>
+            <textarea id="nc-anamnesis" class="form-control" placeholder="Historia del padecimiento actual..."></textarea>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Examen físico</label>
+            <textarea id="nc-examen" class="form-control" placeholder="Hallazgos al examen..."></textarea>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Diagnóstico</label>
+            <textarea id="nc-diagnostico" class="form-control" placeholder="CIE-10 y descripción diagnóstica..."></textarea>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Tratamiento / Plan</label>
+            <textarea id="nc-tratamiento" class="form-control" placeholder="Medicamentos, dosis, duración..."></textarea>
+          </div>
+          <div class="form-group form-full">
+            <label class="form-label">Indicaciones para la paciente</label>
+            <textarea id="nc-indicaciones" class="form-control" placeholder="Reposo, dieta, próxima cita..."></textarea>
+          </div>
+          <div class="form-group form-full">
+            <label class="form-label">Resultados de laboratorio</label>
+            <textarea id="nc-lab" class="form-control" placeholder="Hemograma, orina, bioquímica..."></textarea>
+          </div>
+          <div class="form-group form-full">
+            <label class="form-label">Notas adicionales</label>
+            <textarea id="nc-notas" class="form-control" placeholder="Otras observaciones..."></textarea>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="closeModal('modal-consulta')">Cancelar</button>
+      <button class="btn btn-sage" onclick="guardarConsulta(false)">Guardar borrador</button>
+      <button class="btn btn-primary" onclick="guardarConsulta(true)">Guardar y finalizar</button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal: Nueva Cita -->
+<div class="modal-backdrop" id="modal-nueva-cita">
+  <div class="modal">
+    <div class="modal-header">
+      <div>
+        <h2>Programar cita</h2>
+        <p>Mínimo 30 minutos por cita · Sin solapamiento de horarios</p>
+      </div>
+      <button class="modal-close" onclick="closeModal('modal-nueva-cita')">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-section">
+        <p class="form-section-title">Paciente</p>
+        <div style="position:relative">
+          <input type="text" id="cita-busq-pac" class="form-control" placeholder="Buscar por nombre o DNI…">
+          <div class="autocomplete-drop" id="cita-drop-pac"></div>
+        </div>
+        <input type="hidden" id="cita-pac-id">
+        <span id="cita-pac-sel" style="font-size:13px;color:var(--sage);margin-top:6px;display:none"></span>
+      </div>
+
+      <div class="form-section">
+        <p class="form-section-title">Horario</p>
+        <div class="form-row cols-3">
+          <div class="form-group">
+            <label class="form-label">Fecha *</label>
+            <input type="date" id="cita-fecha" class="form-control">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Hora inicio *</label>
+            <input type="time" id="cita-inicio" class="form-control" oninput="calcDuracionCita()">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Hora fin *</label>
+            <input type="time" id="cita-fin" class="form-control" oninput="calcDuracionCita()">
+          </div>
+        </div>
+        <div id="cita-duracion" style="font-size:13px;color:var(--sage);margin-top:8px"></div>
+        <div id="cita-conflicto" style="display:none;padding:10px 14px;background:var(--red-light);border:1px solid rgba(184,82,82,0.3);border-radius:var(--r-md);font-size:13px;color:var(--red);margin-top:10px"></div>
+      </div>
+
+      <div class="form-row cols-1" style="gap:12px">
+        <div class="form-group">
+          <label class="form-label">Motivo</label>
+          <input type="text" id="cita-motivo" class="form-control" placeholder="Control prenatal, revisión general...">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Notas</label>
+          <textarea id="cita-notas" class="form-control" style="min-height:70px" placeholder="Observaciones adicionales..."></textarea>
+        </div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="closeModal('modal-nueva-cita')">Cancelar</button>
+      <button class="btn btn-blue" onclick="guardarCita()">Guardar cita</button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal: Cambiar contraseña -->
+<div class="modal-backdrop" id="modal-password">
+  <div class="modal modal-sm">
+    <div class="modal-header">
+      <div><h2>Cambiar contraseña</h2></div>
+      <button class="modal-close" onclick="closeModal('modal-password')">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-group" style="margin-bottom:14px">
+        <label class="form-label">Contraseña actual</label>
+        <input type="password" id="pass-actual" class="form-control">
+      </div>
+      <div class="form-group" style="margin-bottom:14px">
+        <label class="form-label">Nueva contraseña</label>
+        <input type="password" id="pass-nueva" class="form-control">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Confirmar nueva contraseña</label>
+        <input type="password" id="pass-confirmar" class="form-control">
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="closeModal('modal-password')">Cancelar</button>
+      <button class="btn btn-primary" onclick="cambiarPassword()">Guardar nueva contraseña</button>
+    </div>
+  </div>
+</div>
+
+<script src="js/core.js"></script>
+<script src="js/pacientes.js"></script>
+<script src="js/consultas.js"></script>
+<script src="js/agenda.js"></script>
+<script src="js/app.js"></script>
+</body>
+</html>
