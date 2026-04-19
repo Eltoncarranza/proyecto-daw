@@ -5,7 +5,6 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.http.HttpMethod;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.AuthenticationProvider;
 import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
@@ -35,25 +34,23 @@ public class SecurityConfig {
     private final JwtAuthFilter jwtAuthFilter;
     private final UserDetailsService userDetailsService;
 
-    @Value("${frontend.url}")
+    @Value("${frontend.url:http://localhost:3000}")
     private String frontendUrl;
 
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
-            .csrf(AbstractHttpConfigurer::disable)
-            .cors(cors -> cors.configurationSource(corsConfigurationSource()))
-            .sessionManagement(session ->
-                session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
-            .authorizeHttpRequests(auth -> auth
-                // Rutas públicas
-                .requestMatchers("/api/auth/**").permitAll()
-                .requestMatchers("/swagger-ui/**", "/v3/api-docs/**").permitAll()
-                // Todo lo demás requiere autenticación
-                .anyRequest().authenticated()
-            )
-            .authenticationProvider(authenticationProvider())
-            .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class);
+                .csrf(AbstractHttpConfigurer::disable)
+                .cors(cors -> cors.configurationSource(corsConfigurationSource()))
+                .sessionManagement(session ->
+                        session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+                .authorizeHttpRequests(auth -> auth
+                        .requestMatchers("/api/auth/**").permitAll() // Tus endpoints de datos
+                        .requestMatchers("/login", "/login.html", "/css/**", "/js/**", "/img/**").permitAll() // Tu diseño
+                        .anyRequest().authenticated()
+                )
+                .authenticationProvider(authenticationProvider())
+                .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class);
 
         return http.build();
     }
@@ -61,7 +58,8 @@ public class SecurityConfig {
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration config = new CorsConfiguration();
-        config.setAllowedOriginPatterns(List.of("*")); // Permite cualquier origen en modo desarrollo
+        // Permite cualquier origen en modo desarrollo (Live Server, VSCode, IntelliJ)
+        config.setAllowedOriginPatterns(List.of("*"));
         config.setAllowedMethods(List.of("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"));
         config.setAllowedHeaders(List.of("*"));
         config.setAllowCredentials(true);
